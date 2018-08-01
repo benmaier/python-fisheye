@@ -25,6 +25,9 @@ class fisheye():
         else:
             self.xw = xw
 
+        if mode == 'sqrt':
+            assert(d > 1)
+
         self.mode = mode
 
         self._compute_parameters()
@@ -34,27 +37,29 @@ class fisheye():
         xw = self.xw
 
         if self.mode in ('default', 'Sarkar'):
-            self.f1 = lambda x: (x+self.d*x) / (self.d*x + self.A2)
-            self.f1_inverse = lambda x: self.A2 * x / (self.d * (1-x) + 1)
+            self.f2 = lambda x: (x+self.d*x) / (self.d*x + self.A2)
+            self.f2_inverse = lambda x: self.A2 * x / (self.d * (1-x) + 1)
         elif self.mode == 'sqrt':
-            self.f1 = lambda x: (self.d/self.A2*x)**(1./self.d)
-            self.f1_inverse = lambda x: self.A2 / self.d * x**self.d
+            self.f2 = lambda x: (self.d/self.A2*x)**(1./self.d)
+            self.f2_inverse = lambda x: self.A2 / self.d * x**self.d
 
-        self.f2 = lambda x: 1 - (-1./self.A1 + np.sqrt(1/self.A1**2 + 2*(1-x)/self.A1))
-        self.f2_inverse = lambda x: x - self.A1/2 * (1-x)**2
+        self.f1 = lambda x: 1 - (-1./self.A1 + np.sqrt(1/self.A1**2 + 2*(1-x)/self.A1))
+        self.f1_inverse = lambda x: x - self.A1/2 * (1-x)**2
 
         if xw == 0.0:
             self.A1 = 0
-            self.A2 = 1
+            if self.mode == 'sqrt':
+                self.A2 = d
+            else:
+                self.A2 = 1
         elif xw == 1.0:
-            self.A2 = 0
-            self.A1 = 1
+            self.A2 = 1
+            self.A1 = 0
         else:
 
-
-            if self.mode in ('default', 'Sarkar'):
+            if self.mode == 'default':
                 X = np.array([[ xw**2/2., 1 - ((d+1)*xw / (d*xw+1)) ],
-                              [ xw,         - (d+1) / (d*xw+1)**2   ]]);
+                              [ xw,         - (d+1) / (d*xw+1)**2   ]])
             elif self.mode == 'sqrt':
                 X = np.array([[ xw**2/2, ((1-xw)**d)/d],
                               [xw, -(1-xw)**(d-1)]])
@@ -65,11 +70,13 @@ class fisheye():
         xc = self.A1/2 * xw**2 + xw
         self.xc = 1 - xc
 
-
+        print(xw, self.A1, self.A2, xc)
 
 
     def set_magnification(self,d):
         assert(d > 0)
+        if self.mode == 'sqrt':
+            assert(d>=1)
         self.d = d
         self._compute_parameters()
 
@@ -86,6 +93,10 @@ class fisheye():
 
     def set_mode(self,mode):
         self.mode = mode
+
+        if self.mode == 'sqrt':
+            assert(self.d>=1)
+
         self._compute_parameters()
 
     def set_focus(self,focus):
@@ -109,22 +120,27 @@ class fisheye():
                 pos = pos.reshape((len(pos.shape),1))
 
     def fisheye_raw(self,r):
-        result = np.copy(r)
+        result = np.empty_like(r)
+        print("xc =", self.xc)
         if self.xc > 0 and self.xc < 1:
-            result[r<=self.xc] = self.f1(result[r<=self.xc])
-            result[r>self.xc] = self.f2(result[r>self.xc])
-        elif self.xc == 0:
-            result = self.f1(result)
+            result[r<=self.xc] = self.f2(r[r<=self.xc])
+            result[r>self.xc] = self.f1(r[r>self.xc])
+        elif self.xc == 1:
+            result = self.f2(r)
+        else:
+            result = r
 
         return result
 
     def fisheye_raw_inverse(self,r):
-        result = np.copy(r)
+        result = np.empty_like(r)
         if self.xw > 0 and self.xw < 1:
-            result[r<=1-self.xw] = self.f2_inverse(result[r<=1-self.xw])
-            result[r>1-self.xw] = self.f1_inverse(result[r>1-self.xw])
+            result[r<=1-self.xw] = self.f2_inverse(r[r<=1-self.xw])
+            result[r>1-self.xw] = self.f1_inverse(r[r>1-self.xw])
         elif self.xw == 0:
-            result = self.f2_inverse(result)
+            result = self.f2_inverse(r)
+        else:
+            result = r
 
         return result
 
@@ -161,11 +177,14 @@ class fisheye():
         return self.radial_2D(pos, inverse=True)
 
 if __name__=="__main__":
-    F = fisheye(1,mode='sqrt',xw=0)
+    F = fisheye(0.5,mode='sqrt',xw=1.0,d=3)    
     
-    F.set_focus([0.4325,0.34654])
+    F.set_focus([0.5,0.5])
 
-    print(F.focus)
-    result = F.inverse_radial_2D(F.radial_2D([0.5,0.5]))
-    print(result, result.shape)
+    point = [0.99,0.5]
+    print("original point =", point)
+    transform = F.radial_2D(point)
+    print("fisheye point =", transform)
+    result = F.inverse_radial_2D(transform)
+    print("inverse point =", result)
     
