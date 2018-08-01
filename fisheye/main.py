@@ -120,27 +120,24 @@ class fisheye():
                 pos = pos.reshape((len(pos.shape),1))
 
     def fisheye_raw(self,r):
-        result = np.empty_like(r)
-        print("xc =", self.xc)
+        result = np.copy(r)
         if self.xc > 0 and self.xc < 1:
             result[r<=self.xc] = self.f2(r[r<=self.xc])
-            result[r>self.xc] = self.f1(r[r>self.xc])
+            ndcs = np.logical_and(r>self.xc, r<1)
+            result[ndcs] = self.f1(r[ndcs])
         elif self.xc == 1:
-            result = self.f2(r)
-        else:
-            result = r
+            result[r<1] = self.f2(r[r<1])
 
         return result
 
     def fisheye_raw_inverse(self,r):
-        result = np.empty_like(r)
+        result = np.copy(r)
         if self.xw > 0 and self.xw < 1:
             result[r<=1-self.xw] = self.f2_inverse(r[r<=1-self.xw])
-            result[r>1-self.xw] = self.f1_inverse(r[r>1-self.xw])
+            ndcs = np.logical_and(r>1-self.xw, r<1)
+            result[ndcs] = self.f1_inverse(r[ndcs])
         elif self.xw == 0:
-            result = self.f2_inverse(r)
-        else:
-            result = r
+            result[r<1] = self.f2_inverse(r[r<1])
 
         return result
 
