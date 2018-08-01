@@ -72,5 +72,5 @@ pl.show()
 
 ![default magnification](https://github.com/benmaier/python-fisheye/raw/master/sandbox/default_parameter_scan.png "scan for default method (note that xw = 0 is equivalent to Sarkar-Brown")
 
-![root magnification](https://github.com/benmaier/python-fisheye/raw/master/sandbox/sqrt_parameter_scan.png "scan for root magnification")
+![root magnification](https://github.com/benmaier/python-fisheye/raw/master/sandbox/root_parameter_scan.png "scan for root magnification")
 
