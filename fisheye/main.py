@@ -13,15 +13,18 @@ def is_iterable(obj):
 class fisheye():
 
     def __init__(self,R,mode='default',d=4,xw=0.25):
+
+        assert(d > 0)
+        assert(xw >= 0.0 and xw<=1.0)
+
         self.R = R
         self.d = d
-
-        assert(xw >= 0.0 and xw<=1.0)
 
         if mode == 'Sarkar':
             self.xw = 0
         else:
             self.xw = xw
+
         self.mode = mode
 
         self._compute_parameters()
@@ -66,6 +69,7 @@ class fisheye():
 
 
     def set_magnification(self,d):
+        assert(d > 0)
         self.d = d
         self._compute_parameters()
 
@@ -134,7 +138,7 @@ class fisheye():
         if len(pos.shape) == 1:
             pos = pos.reshape((1,pos.shape[0]))
 
-        theta = np.arctan(pos[:,1]-self.focus[1], pos[:,0]-self.focus[0])
+        theta = np.arctan2(pos[:,1]-self.focus[1], pos[:,0]-self.focus[0])
 
         x = cdist(pos, self.focus.reshape(1,len(self.focus))).flatten() / self.R
 
@@ -159,9 +163,9 @@ class fisheye():
 if __name__=="__main__":
     F = fisheye(1,mode='sqrt',xw=0)
     
-    F.set_focus([0.5,0.5])
+    F.set_focus([0.4325,0.34654])
 
     print(F.focus)
-    result = F.inverse_radial_2D(F.radial_2D([0.55,0.5]))
+    result = F.inverse_radial_2D(F.radial_2D([0.5,0.5]))
     print(result, result.shape)
     

@@ -1,1 +1,1 @@
-from main import fisheye
+from .main import fisheye
