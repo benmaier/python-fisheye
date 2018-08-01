@@ -25,8 +25,8 @@ for iax, ax in enumerate(axs):
         ax.set_title('Sarkar-Brown')
         F.set_mode('Sarkar')
     elif iax == 3:
-        ax.set_title('square root')
-        F.set_mode('sqrt')
+        ax.set_title('root')
+        F.set_mode('root')
 
     if iax == 0:
         _pos = pos

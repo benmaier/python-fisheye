@@ -16,6 +16,7 @@ class fisheye():
 
         assert(d > 0)
         assert(xw >= 0.0 and xw<=1.0)
+        assert(mode in ('Sarkar', 'default', 'root'))
 
         self.R = R
         self.d = d
@@ -25,10 +26,12 @@ class fisheye():
         else:
             self.xw = xw
 
-        if mode == 'sqrt':
+        if mode == 'root':
             assert(d > 1)
 
         self.mode = mode
+
+        self.old_xw = None
 
         self._compute_parameters()
 
@@ -39,7 +42,7 @@ class fisheye():
         if self.mode in ('default', 'Sarkar'):
             self.f2 = lambda x: (x+self.d*x) / (self.d*x + self.A2)
             self.f2_inverse = lambda x: self.A2 * x / (self.d * (1-x) + 1)
-        elif self.mode == 'sqrt':
+        elif self.mode == 'root':
             self.f2 = lambda x: (self.d/self.A2*x)**(1./self.d)
             self.f2_inverse = lambda x: self.A2 / self.d * x**self.d
 
@@ -48,7 +51,7 @@ class fisheye():
 
         if xw == 0.0:
             self.A1 = 0
-            if self.mode == 'sqrt':
+            if self.mode == 'root':
                 self.A2 = d
             else:
                 self.A2 = 1
@@ -60,7 +63,7 @@ class fisheye():
             if self.mode == 'default':
                 X = np.array([[ xw**2/2., 1 - ((d+1)*xw / (d*xw+1)) ],
                               [ xw,         - (d+1) / (d*xw+1)**2   ]])
-            elif self.mode == 'sqrt':
+            elif self.mode == 'root':
                 X = np.array([[ xw**2/2, ((1-xw)**d)/d],
                               [xw, -(1-xw)**(d-1)]])
 
@@ -70,12 +73,9 @@ class fisheye():
         xc = self.A1/2 * xw**2 + xw
         self.xc = 1 - xc
 
-        print(xw, self.A1, self.A2, xc)
-
-
     def set_magnification(self,d):
         assert(d > 0)
-        if self.mode == 'sqrt':
+        if self.mode == 'root':
             assert(d>=1)
         self.d = d
         self._compute_parameters()
@@ -92,9 +92,19 @@ class fisheye():
         self.R = R
 
     def set_mode(self,mode):
+        assert(mode in ('Sarkar', 'default', 'root'))
+
+        if mode == 'Sarkar' and self.mode != 'Sarkar':
+            self.old_xw = self.xw
+            self.xw = 0.0
+
+        if mode != 'Sarkar' and self.old_xw is not None:
+            self.xw = self.old_xw
+            self.old_xw = None
+
         self.mode = mode
 
-        if self.mode == 'sqrt':
+        if self.mode == 'root':
             assert(self.d>=1)
 
         self._compute_parameters()
@@ -174,7 +184,7 @@ class fisheye():
         return self.radial_2D(pos, inverse=True)
 
 if __name__=="__main__":
-    F = fisheye(0.5,mode='sqrt',xw=1.0,d=3)    
+    F = fisheye(0.5,mode='root',xw=1.0,d=3)    
     
     F.set_focus([0.5,0.5])
 

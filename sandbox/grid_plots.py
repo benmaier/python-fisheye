@@ -11,7 +11,7 @@ mode = 'default'
 dx = 1.0 / N
 dir1 = np.linspace(0,1,500)
 
-for imode, mode in enumerate(['default', 'sqrt']):
+for imode, mode in enumerate(['default', 'root']):
 
     if mode == 'sqrt':
         ds = [1.5,2,2.5,3,]
