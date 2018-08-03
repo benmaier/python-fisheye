@@ -11,8 +11,18 @@ def is_iterable(obj):
         return False
 
 class fisheye():
+    """A class for fisheye transformations
 
-    def __init__(self,R,mode='default',d=4,xw=0.25):
+    Parameters
+    ----------
+    
+
+    Attributes
+    ----------
+    """
+
+
+    def __init__(self,R,mode='default',d=4,xw=0.25,focus=None):
 
         assert(d > 0)
         assert(xw >= 0.0 and xw<=1.0)
@@ -20,6 +30,7 @@ class fisheye():
 
         self.R = R
         self.d = d
+        self.set_focus(focus)
 
         if mode == 'Sarkar':
             self.xw = 0
@@ -129,7 +140,7 @@ class fisheye():
             if len(pos.shape) == 1:
                 pos = pos.reshape((len(pos.shape),1))
 
-    def fisheye_raw(self,r):
+    def fisheye_function(self,r):
         result = np.copy(r)
         if self.xc > 0 and self.xc < 1:
             result[r<=self.xc] = self.f2(r[r<=self.xc])
@@ -140,7 +151,7 @@ class fisheye():
 
         return result
 
-    def fisheye_raw_inverse(self,r):
+    def fisheye_function_inverse(self,r):
         result = np.copy(r)
         if self.xw > 0 and self.xw < 1:
             result[r<=1-self.xw] = self.f2_inverse(r[r<=1-self.xw])
@@ -150,6 +161,38 @@ class fisheye():
             result[r<1] = self.f2_inverse(r[r<1])
 
         return result
+
+    def cartesian(self,pos,inverse=False):
+
+        if not type(pos) == np.ndarray:
+            pos = np.array(pos)
+
+        original_shape = pos.shape
+
+        if len(pos.shape) == 1:
+            pos = pos.reshape((1,pos.shape[0]))
+
+        newpos = np.empty_like(pos)
+
+        for dim in range(pos.shape[1]):
+            r = pos[:,dim] - self.focus[dim]
+            x = np.abs(r) / self.R
+            theta = np.sign(r)
+
+            if not inverse:
+                newx = self.fisheye_function(x)
+            else:
+                newx = self.fisheye_function_inverse(x)
+
+
+            newpos[:,dim] = self.focus[dim] + theta * self.R * newx
+
+        newpos = newpos.reshape(original_shape)
+
+        return newpos
+
+    def inverse_cartesian(self,pos):
+        return self.cartesian(pos, inverse=True)
 
     def radial_2D(self,pos,inverse=False):
 
@@ -167,9 +210,9 @@ class fisheye():
 
 
         if not inverse:
-            newx = self.fisheye_raw(x)
+            newx = self.fisheye_function(x)
         else:
-            newx = self.fisheye_raw_inverse(x)
+            newx = self.fisheye_function_inverse(x)
 
         newpos = np.empty_like(pos)
 
@@ -182,6 +225,42 @@ class fisheye():
 
     def inverse_radial_2D(self,pos):
         return self.radial_2D(pos, inverse=True)
+
+    def scale_radial_2D(self,pos,radii,inverse=False):
+        
+        if not type(pos) == np.ndarray:
+            pos = np.array(pos)
+
+        original_shape = pos.shape
+
+        if len(pos.shape) == 1:
+            pos = pos.reshape((1,pos.shape[0]))
+
+        theta = np.arctan2(pos[:,1]-self.focus[1], pos[:,0]-self.focus[0])
+
+        x = cdist(pos, self.focus.reshape(1,len(self.focus))).flatten() / self.R
+        x2 = x + radii / self.R
+
+        if not inverse:
+            newx = self.fisheye_function(x)
+            newx2 = self.fisheye_function(x2)
+        else:
+            newx = self.fisheye_function_inverse(x)            
+            newx2 = self.fisheye_function_inverse(x2)
+
+        newpos = np.empty_like(pos)
+        newpos2 = np.empty_like(pos)
+
+        newpos[:,0] = self.focus[0] + np.cos(theta) * self.R * newx
+        newpos[:,1] = self.focus[1] + np.sin(theta) * self.R * newx
+
+        newpos2[:,0] = self.focus[0] + np.cos(theta) * self.R * newx2
+        newpos2[:,1] = self.focus[1] + np.sin(theta) * self.R * newx2
+
+        radii = np.linalg.norm(newpos2 - newpos,axis=1)
+
+        return newpos, radii
+    
 
 if __name__=="__main__":
     F = fisheye(0.5,mode='root',xw=1.0,d=3)    
