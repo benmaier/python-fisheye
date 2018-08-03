@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='fisheye',
-      version='0.0.2',
+      version='0.0.3',
       description="Transform single points or arrays of points using several fisheye functions.",
       url='https://www.github.com/benmaier/python-fisheye',
       author='Benjamin F. Maier',
