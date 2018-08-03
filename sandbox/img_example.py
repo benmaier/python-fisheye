@@ -1,7 +1,7 @@
 import matplotlib.pyplot as pl
 import fisheye
 
-data = pl.imread('../sandbox/example.tiff')
+data = pl.imread('./example.png')
 
 R = 300
 focus = [400.,400.]
