@@ -46,16 +46,16 @@ for imode, mode in enumerate(['default', 'root']):
 
                 ax[i_d,ixw].axis('square')
                 ax[i_d,ixw].axis('off')
-                if i_d == 0:
-                    ax[i_d,ixw].text(0.5,1.05,'$x_w = {:3.1f}$'.format(xw).format(xw),
-                                     transform = ax[i_d,ixw].transAxes,
-                                     ha='center'
-                            )
-                if ixw == 0:
-                    ax[i_d,ixw].text(-0.2,0.5,'$d = {:4.1f}$'.format(d),
-                                     transform = ax[i_d,ixw].transAxes,
-                                     rotation = 'vertical',va='center'
-                            )
+            if i_d == 0:
+                ax[i_d,ixw].text(0.5,1.05,'$x_w = {:3.1f}$'.format(xw).format(xw),
+                                 transform = ax[i_d,ixw].transAxes,
+                                 ha='center'
+                        )
+            if ixw == 0:
+                ax[i_d,ixw].text(-0.2,0.5,'$d = {:4.1f}$'.format(d),
+                                 transform = ax[i_d,ixw].transAxes,
+                                 rotation = 'vertical',va='center'
+                        )
 
 
     fig.tight_layout()
