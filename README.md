@@ -1,6 +1,6 @@
 # fisheye
 
-Transform single points or arrays of points using several fisheye functions.
+Transform single points or arrays of points using several fisheye functions. Check out the [fisheye observable notebook](https://beta.observablehq.com/@benmaier/a-visually-more-appealing-fisheye-function) for an explanation of the underlying math. There's a [fisheye Javascript version](https://github.com/benmaier/fisheye), too.
 
 ## Install
 
